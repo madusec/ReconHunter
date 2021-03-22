@@ -1,0 +1,161 @@
+#!/bin/bash
+
+G='\033[1;32m'
+R='\033[1;31m'
+NC='\033[0m'
+
+if [ "$#" -ne 4 ]; then
+  echo -e "You must run the tool like that: ${G}$0 Domain_Name Github_User Censys_API_ID Censys_API_Secret${NC}"
+  exit 0
+fi
+
+Domain=$1
+User=$2
+API_ID=$3
+API_Secret=$4
+
+echo -e "Target Domain: ${G}$Domain${NC}"
+echo -e "Github Username: ${G}$User${NC}"
+
+echo -e "${G}########## Running Step 1 ##########${NC}"
+
+echo -e "${R}Running Crobat...${NC}"
+/root/go/bin/crobat -s $Domain > 1_passive_domains.txt
+
+echo -e "${R}Running Amass...${NC}"
+amass enum -passive -d $Domain >> 1_passive_domains.txt
+
+echo -e "${R}Running Subfinder...${NC}"
+subfinder -silent -d $Domain >> 1_passive_domains.txt
+
+echo -e "${R}Combining the Result...${NC}"
+cat 1_passive_domains.txt | sort -n | uniq > tmp
+mv tmp 1_passive_domains.txt
+cat 1_passive_domains.txt
+
+echo -e "${R}Running Resolving...${NC}"
+cat 1_passive_domains.txt | sed "s/.$Domain//g" > tmp
+gobuster dns -d $Domain -t 10 -w tmp -o tmp1 -q
+cat tmp1 | cut -d " " -f 2 > 2_resolved_passive_domains.txt
+rm tmp tmp1
+
+echo -e "${G}########## Running Step 2 ##########${NC}"
+
+echo -e "${R}Running Brute Force...${NC}"
+gobuster dns -d $Domain -t 10 -w words.txt -o tmp -q
+cat tmp | cut -d " " -f 2 > 3_resolved_brute_force.txt
+rm tmp
+
+echo -e "${R}Combining the Result...${NC}"
+cat 3_resolved_brute_force.txt 2_resolved_passive_domains.txt | sort -n | uniq > 4_all_resolved.txt
+cat 4_all_resolved.txt
+
+echo -e "${R}Running Altdns...${NC}"
+altdns -i 4_all_resolved.txt -o tmp -w words.txt
+cat tmp | sed "s/.$Domain//g" > tmp1
+rm tmp
+gobuster dns -d $Domain -t 10 -w tmp1 -o tmp -q
+cat tmp | cut -d " " -f 2 > 5_resolved_altdns.txt
+rm tmp tmp1
+
+echo -e "${R}Combining the Result...${NC}"
+cat 5_resolved_altdns.txt 4_all_resolved.txt | sort -n | uniq > tmp
+mv tmp 4_all_resolved.txt
+cat 4_all_resolved.txt
+
+echo -e "${G}########## Running Step 3 ##########${NC}"
+
+echo -e "${R}Running Sub-Domains Takeover...${NC}"
+go get github.com/Ice3man543/SubOver
+cat 1_passive_domains.txt 4_all_resolved.txt | sort -n | uniq > tmp
+mv tmp /root/go/src/github.com/Ice3man543/SubOver/
+x=$(pwd)
+cd /root/go/src/github.com/Ice3man543/SubOver
+/root/go/bin/SubOver -l tmp
+rm tmp
+cd $x
+
+echo -e "${R}Running Screenshot Process...${NC}"
+nmap -iL 4_all_resolved.txt -p443 --open | grep "Nmap scan report" | cut -d " " -f 5 > https.txt
+nmap -iL 4_all_resolved.txt -p80 --open | grep "Nmap scan report" | cut -d " " -f 5 > http.txt
+
+eyewitness -f https.txt --timeout 30 --only-ports 443 --max-retries 5 --results 100 -d result_https --no-prompt
+eyewitness -f http.txt --timeout 30 --only-ports 80 --max-retries 5 --results 100 -d result_http --no-prompt
+
+echo -e "${G}########## Running Step 4 ##########${NC}"
+
+echo -e "${R}Running IP Resolving...${NC}"
+rm -f IP.txt
+for line in $(cat 4_all_resolved.txt); do
+host $line | grep "has address" | grep $Domain >> IP.txt
+done
+cat IP.txt | cut -d " " -f 4 | sort -n | uniq > Full_IP.txt
+cat Full_IP.txt
+echo "Total IP:" $(wc -l Full_IP.txt)
+
+echo -e "${R}Running Censys Scan...${NC}"
+censys --censys_api_id $API_ID --censys_api_secret $API_Secret --query_type ipv4 "443.https.tls.certificate.parsed.subject.common_name:$Domain or 443.https.tls.certificate.parsed.names:$Domain or 443.https.tls.certificate.parsed.extensions.subject_alt_name.dns_names:$Domain or 443.https.tls.certificate.parsed.subject_dn:$Domain" --fields ip protocols --append false > censys_result.txt
+cat censys_result.txt | grep ip | cut -d '"' -f 4 | sort -n | uniq > censys_IP.txt
+cat censys_IP.txt
+echo "Total IP:" $(wc -l censys_IP.txt)
+
+echo -e "${R}Combining the Result...${NC}"
+cat Full_IP.txt censys_IP.txt | sort -n | uniq > All_IP.txt
+cat All_IP.txt
+echo "Total IP:" $(wc -l All_IP.txt)
+
+echo -e "${R}Running Port Scanning...${NC}"
+nmap -iL All_IP.txt -Pn -sS -sU -p U:53,123,161,T:21,22,23,25,80,110,139,389,443,445,3306,3389 --open -oG result.gnmap > /dev/null 2>&1
+
+cat result.gnmap | grep Ports: | grep -oE "([0-9]{1,3}\.){3}[0-9]{1,3}|[0-9]+/[a-z]+\|*[a-z]+/[a-z]+" > summary.txt
+
+echo -e "${R}Running the Summary Version...${NC}"
+cat summary.txt | while read line; do if [[ $line != *"open"* ]]; then echo ""; echo -e "${G}$line${NC}"; else echo $line;fi; done
+
+echo -e "${G}########## Running Step 5 ##########${NC}"
+
+echo -e "${R}Running Github Recon...${NC}"
+# Find the repos owned by the target organization (not forked)
+# then clone these repos locally
+curl -s https://api.github.com/users/$User/repos | grep 'full_name\|fork"' \
+| cut -d " " -f6 | cut -d "/" -f2 | cut -d '"' -f1 | cut -d "," -f1 | \
+while read line1; do read line2; echo $line1 $line2; done | \
+grep false | cut -d " " -f1 | while read repo;
+do echo "Downloading" $repo; git clone https://github.com/$User/$repo; done
+
+# Find sensitive data inside repos using git
+for i in ./*/; do
+cd $i
+git log -p > commits.txt
+cat commits.txt | grep "api\|key\|user\|uname\|pw\|pass\|mail\|credential\|login\|token\|secret" > secrets.txt
+cd ..
+done
+
+# Find sensitive data inside repos using trufflehog
+rm -f othersecrets.txt
+for i in ./*/; do
+trufflehog --entropy=False --regex $i >> othersecrets.txt;
+done
+
+echo -e "${G}########## Running Step 6 ##########${NC}"
+
+echo -e "${R}Running Cloud Recon...${NC}"
+git clone https://github.com/gwen001/s3-buckets-finder
+cd s3-buckets-finder
+# Download wordlist then apply permutations on it
+wget -q https://raw.githubusercontent.com/nahamsec/lazys3/master/common_bucket_prefixes.txt -O common_bucket_prefixes.txt
+domain=$(echo $Domain | cut -d "." -f1)
+rm -f res.txt
+for i in $(cat common_bucket_prefixes.txt); do
+for word in {dev,development,stage,s3,staging,prod,production,test}; do
+echo $domain-$i-$word >> res.txt
+echo $domain-$i.$word >> res.txt
+echo $domain-$i$word >> res.txt
+echo $domain.$i$word >> res.txt
+echo $domain.$i-$word >> res.txt
+echo $domain.$i.$word >> res.txt
+done; done
+
+# Start the brute force
+php s3-buckets-bruteforcer.php --bucket res.txt --verbosity 1
+cd ..
