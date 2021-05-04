@@ -49,6 +49,7 @@ rm tmp tmp1
 echo -e "${G}########## Running Step 2 ##########${NC}"
 
 echo -e "${R}Running Brute Force...${NC}"
+wget https://raw.githubusercontent.com/OWASP/Amass/master/examples/wordlists/subdomains.lst -O words.txt
 gotools/bin/gobuster dns -d $Domain -t 10 -w words.txt -o tmp -q
 cat tmp | cut -d " " -f 2 > 3_resolved_brute_force.txt
 rm tmp
