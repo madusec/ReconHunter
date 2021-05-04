@@ -126,6 +126,7 @@ cat Full_IP.txt censys_IP.txt | sort -n | uniq > All_IP.txt
 cat All_IP.txt
 echo "Total IP:" $(wc -l All_IP.txt)
 
+# UDP scan needs root privilege -sU
 echo -e "${R}Running Port Scanning...${NC}"
 nmap -iL All_IP.txt -Pn -p U:53,123,161,T:21,22,23,25,80,110,139,389,443,445,3306,3389 --open -oG result.gnmap > /dev/null 2>&1
 
@@ -162,7 +163,7 @@ done
 # Find sensitive data inside repos using trufflehog
 rm -f othersecrets.txt
 for i in ./*/; do
-pip3 install truffleHog
+python3 -m pip install truffleHog
 trufflehog --entropy=False --regex $i >> othersecrets.txt;
 done
 
@@ -171,23 +172,23 @@ fi
 
 echo -e "${G}########## Running Step 6 ##########${NC}"
 
-echo -e "${R}Running Cloud Recon...${NC}"
-git clone https://github.com/gwen001/s3-buckets-finder
-cd s3-buckets-finder
-# Download wordlist then apply permutations on it
-wget -q https://raw.githubusercontent.com/nahamsec/lazys3/master/common_bucket_prefixes.txt -O common_bucket_prefixes.txt
-domain=$(echo $Domain | cut -d "." -f1)
-rm -f res.txt
-for i in $(cat common_bucket_prefixes.txt); do
-for word in {dev,development,stage,s3,staging,prod,production,test}; do
-echo $domain-$i-$word >> res.txt
-echo $domain-$i.$word >> res.txt
-echo $domain-$i$word >> res.txt
-echo $domain.$i$word >> res.txt
-echo $domain.$i-$word >> res.txt
-echo $domain.$i.$word >> res.txt
-done; done
+#echo -e "${R}Running Cloud Recon...${NC}"
+#git clone https://github.com/gwen001/s3-buckets-finder
+#cd s3-buckets-finder
+## Download wordlist then apply permutations on it
+#wget -q https://raw.githubusercontent.com/nahamsec/lazys3/master/common_bucket_prefixes.txt -O common_bucket_prefixes.txt
+#domain=$(echo $Domain | cut -d "." -f1)
+#rm -f res.txt
+#for i in $(cat common_bucket_prefixes.txt); do
+#for word in {dev,development,stage,s3,staging,prod,production,test}; do
+#echo $domain-$i-$word >> res.txt
+#echo $domain-$i.$word >> res.txt
+#echo $domain-$i$word >> res.txt
+#echo $domain.$i$word >> res.txt
+#echo $domain.$i-$word >> res.txt
+#echo $domain.$i.$word >> res.txt
+#done; done
 
-# Start the brute force
-php s3-buckets-bruteforcer.php --bucket res.txt --verbosity 1
-cd ..
+## Start the brute force
+#php s3-buckets-bruteforcer.php --bucket res.txt --verbosity 1
+#cd ..
