@@ -63,14 +63,14 @@ cat 4_all_resolved.txt | while read line; do if [[ $(dig *.$line +short) ]]; the
 cat 4_all_resolved.txt tmp | sort -n | uniq -u > 4_all_resolved_no_wildcard.txt
 rm tmp
 
-python2 -m pip install py-altdns
-echo -e "${R}Running Altdns...${NC}"
-python2 $(which altdns) -i 4_all_resolved_no_wildcard.txt -o tmp -w words.txt
-cat tmp | sed "s/.$Domain//g" > tmp1
-rm tmp
-gotools/bin/gobuster dns -d $Domain -t 10 -w tmp1 -o tmp -q
-cat tmp | cut -d " " -f 2 > 5_resolved_altdns.txt
-rm tmp tmp1
+#python2 -m pip install py-altdns
+#echo -e "${R}Running Altdns...${NC}"
+#python2 $(which altdns) -i 4_all_resolved_no_wildcard.txt -o tmp -w words.txt
+#cat tmp | sed "s/.$Domain//g" > tmp1
+#rm tmp
+#gotools/bin/gobuster dns -d $Domain -t 10 -w tmp1 -o tmp -q
+#cat tmp | cut -d " " -f 2 > 5_resolved_altdns.txt
+#rm tmp tmp1
 
 echo -e "${R}Combining the Result...${NC}"
 cat 5_resolved_altdns.txt 4_all_resolved.txt | sort -n | uniq > tmp
@@ -98,10 +98,10 @@ echo -e "${R}Running Screenshot Process...${NC}"
 nmap -iL 4_all_resolved.txt -p443 --open | grep "Nmap scan report" | cut -d " " -f 5 > https.txt
 nmap -iL 4_all_resolved.txt -p80 --open | grep "Nmap scan report" | cut -d " " -f 5 > http.txt
 
-git clone https://github.com/FortyNorthSecurity/EyeWitness
-pip3 install parse netaddr selenium fuzzywuzzy pyvirtualdisplay
-python3 EyeWitness/Python/EyeWitness.py -f https.txt --timeout 30 --only-ports 443 --max-retries 5 --results 100 -d result_https --no-prompt
-python3 EyeWitness/Python/EyeWitness.py -f http.txt --timeout 30 --only-ports 80 --max-retries 5 --results 100 -d result_http --no-prompt
+#git clone https://github.com/FortyNorthSecurity/EyeWitness
+#pip3 install parse netaddr selenium fuzzywuzzy pyvirtualdisplay
+#python3 EyeWitness/Python/EyeWitness.py -f https.txt --timeout 30 --only-ports 443 --max-retries 5 --results 100 -d result_https --no-prompt
+#python3 EyeWitness/Python/EyeWitness.py -f http.txt --timeout 30 --only-ports 80 --max-retries 5 --results 100 -d result_http --no-prompt
 
 echo -e "${G}########## Running Step 4 ##########${NC}"
 
@@ -114,7 +114,7 @@ cat IP.txt | cut -d " " -f 4 | sort -n | uniq > Full_IP.txt
 cat Full_IP.txt
 echo "Total IP:" $(wc -l Full_IP.txt)
 
-pip install censys-command-line
+python2 -m pip install censys-command-line
 echo -e "${R}Running Censys Scan...${NC}"
 censys --censys_api_id $API_ID --censys_api_secret $API_Secret --query_type ipv4 "443.https.tls.certificate.parsed.subject.common_name:$Domain or 443.https.tls.certificate.parsed.names:$Domain or 443.https.tls.certificate.parsed.extensions.subject_alt_name.dns_names:$Domain or 443.https.tls.certificate.parsed.subject_dn:$Domain" --fields ip protocols --append false > censys_result.txt
 cat censys_result.txt | grep ip | cut -d '"' -f 4 | sort -n | uniq > censys_IP.txt
@@ -127,7 +127,7 @@ cat All_IP.txt
 echo "Total IP:" $(wc -l All_IP.txt)
 
 echo -e "${R}Running Port Scanning...${NC}"
-nmap -iL All_IP.txt -Pn -sS -sU -p U:53,123,161,T:21,22,23,25,80,110,139,389,443,445,3306,3389 --open -oG result.gnmap > /dev/null 2>&1
+nmap -iL All_IP.txt -Pn -p U:53,123,161,T:21,22,23,25,80,110,139,389,443,445,3306,3389 --open -oG result.gnmap > /dev/null 2>&1
 
 cat result.gnmap | grep Ports: | grep -oE "([0-9]{1,3}\.){3}[0-9]{1,3}|[0-9]+/[a-z]+\|*[a-z]+/[a-z]+" > summary.txt
 
