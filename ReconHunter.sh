@@ -20,7 +20,7 @@ echo -e "Github Username: ${G}$User${NC}"
 echo -e "${G}########## Running Step 1 ##########${NC}"
 
 mkdir gotools 2> /dev/null
-export $GOPATH=$PWD/gotools
+export GOPATH=$PWD/gotools
 
 echo -e "${R}Running Crobat...${NC}"
 go get github.com/cgboal/sonarsearch/crobat
