@@ -58,9 +58,14 @@ echo -e "${R}Combining the Result...${NC}"
 cat 3_resolved_brute_force.txt 2_resolved_passive_domains.txt | sort -n | uniq > 4_all_resolved.txt
 cat 4_all_resolved.txt
 
+# Remove Wildcard Domains
+cat 4_all_resolved.txt | while read line; do if [[ $(dig *.$line +short) ]]; then echo $line >> tmp ;fi; done
+cat 4_all_resolved.txt tmp | sort -n | uniq -u > 4_all_resolved_no_wildcard.txt
+rm tmp
+
 python2 -m pip install py-altdns
 echo -e "${R}Running Altdns...${NC}"
-python2 $(which altdns) -i 4_all_resolved.txt -o tmp -w words.txt
+python2 $(which altdns) -i 4_all_resolved_no_wildcard.txt -o tmp -w words.txt
 cat tmp | sed "s/.$Domain//g" > tmp1
 rm tmp
 gotools/bin/gobuster dns -d $Domain -t 10 -w tmp1 -o tmp -q
@@ -132,6 +137,9 @@ cat summary.txt | while read line; do if [[ $line != *"open"* ]]; then echo ""; 
 echo -e "${G}########## Running Step 5 ##########${NC}"
 
 echo -e "${R}Running Github Recon...${NC}"
+rm -rf github_dirs
+mkdir github_dirs
+cd github_dirs
 # Find the repos owned by the target organization (not forked)
 # then clone these repos locally
 curl -s https://api.github.com/users/$User/repos | grep 'full_name\|fork"' \
@@ -139,6 +147,9 @@ curl -s https://api.github.com/users/$User/repos | grep 'full_name\|fork"' \
 while read line1; do read line2; echo $line1 $line2; done | \
 grep false | cut -d " " -f1 | while read repo;
 do echo "Downloading" $repo; git clone https://github.com/$User/$repo; done
+
+# check if there is not repository to search
+if ! [[ $(find . -type d) == "." ]]; then
 
 # Find sensitive data inside repos using git
 for i in ./*/; do
@@ -154,6 +165,9 @@ for i in ./*/; do
 pip3 install truffleHog
 trufflehog --entropy=False --regex $i >> othersecrets.txt;
 done
+
+cd ..
+fi
 
 echo -e "${G}########## Running Step 6 ##########${NC}"
 
