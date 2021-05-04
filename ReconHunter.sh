@@ -150,7 +150,7 @@ done
 # Find sensitive data inside repos using trufflehog
 rm -f othersecrets.txt
 for i in ./*/; do
-pip install truffleHog
+pip3 install truffleHog
 trufflehog --entropy=False --regex $i >> othersecrets.txt;
 done
 
