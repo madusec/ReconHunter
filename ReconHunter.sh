@@ -19,30 +19,37 @@ echo -e "Github Username: ${G}$User${NC}"
 
 echo -e "${G}########## Running Step 1 ##########${NC}"
 
+mkdir gotools 2> /dev/null
+export $GOPATH=$PWD/gotools
+
 echo -e "${R}Running Crobat...${NC}"
-/root/go/bin/crobat -s $Domain > 1_passive_domains.txt
+go get github.com/cgboal/sonarsearch/crobat
+gotools/bin/crobat -s $Domain > 1_passive_domains.txt
 
 echo -e "${R}Running Amass...${NC}"
-amass enum -passive -d $Domain >> 1_passive_domains.txt
+go get -v github.com/OWASP/Amass/v3/...
+gotools/bin/amass enum -passive -d $Domain >> 1_passive_domains.txt
 
 echo -e "${R}Running Subfinder...${NC}"
-subfinder -silent -d $Domain >> 1_passive_domains.txt
+GO111MODULE=on go get -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder
+gotools/bin/subfinder -silent -d $Domain >> 1_passive_domains.txt
 
 echo -e "${R}Combining the Result...${NC}"
 cat 1_passive_domains.txt | sort -n | uniq > tmp
 mv tmp 1_passive_domains.txt
 cat 1_passive_domains.txt
 
+go get github.com/OJ/gobuster/v3@latest
 echo -e "${R}Running Resolving...${NC}"
 cat 1_passive_domains.txt | sed "s/.$Domain//g" > tmp
-gobuster dns -d $Domain -t 10 -w tmp -o tmp1 -q
+gotools/bin/gobuster dns -d $Domain -t 10 -w tmp -o tmp1 -q
 cat tmp1 | cut -d " " -f 2 > 2_resolved_passive_domains.txt
 rm tmp tmp1
 
 echo -e "${G}########## Running Step 2 ##########${NC}"
 
 echo -e "${R}Running Brute Force...${NC}"
-gobuster dns -d $Domain -t 10 -w words.txt -o tmp -q
+gotools/bin/gobuster dns -d $Domain -t 10 -w words.txt -o tmp -q
 cat tmp | cut -d " " -f 2 > 3_resolved_brute_force.txt
 rm tmp
 
@@ -50,11 +57,12 @@ echo -e "${R}Combining the Result...${NC}"
 cat 3_resolved_brute_force.txt 2_resolved_passive_domains.txt | sort -n | uniq > 4_all_resolved.txt
 cat 4_all_resolved.txt
 
+python2 -m pip install py-altdns
 echo -e "${R}Running Altdns...${NC}"
-altdns -i 4_all_resolved.txt -o tmp -w words.txt
+python2 $(which altdns) -i 4_all_resolved.txt -o tmp -w words.txt
 cat tmp | sed "s/.$Domain//g" > tmp1
 rm tmp
-gobuster dns -d $Domain -t 10 -w tmp1 -o tmp -q
+gotools/bin/gobuster dns -d $Domain -t 10 -w tmp1 -o tmp -q
 cat tmp | cut -d " " -f 2 > 5_resolved_altdns.txt
 rm tmp tmp1
 
@@ -67,20 +75,27 @@ echo -e "${G}########## Running Step 3 ##########${NC}"
 
 echo -e "${R}Running Sub-Domains Takeover...${NC}"
 go get github.com/Ice3man543/SubOver
+wget https://raw.githubusercontent.com/Ice3man543/SubOver/master/providers.json
 cat 1_passive_domains.txt 4_all_resolved.txt | sort -n | uniq > tmp
-mv tmp /root/go/src/github.com/Ice3man543/SubOver/
-x=$(pwd)
-cd /root/go/src/github.com/Ice3man543/SubOver
-/root/go/bin/SubOver -l tmp
-rm tmp
-cd $x
+gotools/bin/SubOver -l tmp
+rm tmp providers.json
+
+if [[ -z $(which nmap nmap/nmap) ]]; then
+git clone https://github.com/nmap/nmap
+cd nmap
+./configure && make
+cd ..
+fi
+export PATH=$PATH:$PWD/nmap
 
 echo -e "${R}Running Screenshot Process...${NC}"
 nmap -iL 4_all_resolved.txt -p443 --open | grep "Nmap scan report" | cut -d " " -f 5 > https.txt
 nmap -iL 4_all_resolved.txt -p80 --open | grep "Nmap scan report" | cut -d " " -f 5 > http.txt
 
-eyewitness -f https.txt --timeout 30 --only-ports 443 --max-retries 5 --results 100 -d result_https --no-prompt
-eyewitness -f http.txt --timeout 30 --only-ports 80 --max-retries 5 --results 100 -d result_http --no-prompt
+git clone https://github.com/FortyNorthSecurity/EyeWitness
+pip3 install parse netaddr selenium fuzzywuzzy pyvirtualdisplay
+python3 EyeWitness/Python/EyeWitness.py -f https.txt --timeout 30 --only-ports 443 --max-retries 5 --results 100 -d result_https --no-prompt
+python3 EyeWitness/Python/EyeWitness.py -f http.txt --timeout 30 --only-ports 80 --max-retries 5 --results 100 -d result_http --no-prompt
 
 echo -e "${G}########## Running Step 4 ##########${NC}"
 
@@ -93,6 +108,7 @@ cat IP.txt | cut -d " " -f 4 | sort -n | uniq > Full_IP.txt
 cat Full_IP.txt
 echo "Total IP:" $(wc -l Full_IP.txt)
 
+pip install censys-command-line
 echo -e "${R}Running Censys Scan...${NC}"
 censys --censys_api_id $API_ID --censys_api_secret $API_Secret --query_type ipv4 "443.https.tls.certificate.parsed.subject.common_name:$Domain or 443.https.tls.certificate.parsed.names:$Domain or 443.https.tls.certificate.parsed.extensions.subject_alt_name.dns_names:$Domain or 443.https.tls.certificate.parsed.subject_dn:$Domain" --fields ip protocols --append false > censys_result.txt
 cat censys_result.txt | grep ip | cut -d '"' -f 4 | sort -n | uniq > censys_IP.txt
@@ -134,6 +150,7 @@ done
 # Find sensitive data inside repos using trufflehog
 rm -f othersecrets.txt
 for i in ./*/; do
+pip install truffleHog
 trufflehog --entropy=False --regex $i >> othersecrets.txt;
 done
 
