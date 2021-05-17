@@ -88,18 +88,19 @@ rm tmp providers.json
 
 if [[ -z $(which nmap nmap/nmap) ]]; then
 git clone https://github.com/nmap/nmap
+echo "Installing nmap..."
 cd nmap
-./configure && make
+./configure > /dev/null 2>&1 && make > /dev/null 2>&1
 cd ..
 fi
 export PATH=$PATH:$PWD/nmap
 
 echo -e "${R}Running Screenshot Process...${NC}"
-nmap -iL 4_all_resolved.txt -p443 --open | grep "Nmap scan report" | cut -d " " -f 5 > https.txt
-nmap -iL 4_all_resolved.txt -p80 --open | grep "Nmap scan report" | cut -d " " -f 5 > http.txt
+#nmap -iL 4_all_resolved.txt -p443 --open | grep "Nmap scan report" | cut -d " " -f 5 > https.txt
+#nmap -iL 4_all_resolved.txt -p80 --open | grep "Nmap scan report" | cut -d " " -f 5 > http.txt
 
 #git clone https://github.com/FortyNorthSecurity/EyeWitness
-#pip3 install parse netaddr selenium fuzzywuzzy pyvirtualdisplay
+#cd EyeWitness/Python/setup && bash setup.sh && cd ..
 #python3 EyeWitness/Python/EyeWitness.py -f https.txt --timeout 30 --only-ports 443 --max-retries 5 --results 100 -d result_https --no-prompt
 #python3 EyeWitness/Python/EyeWitness.py -f http.txt --timeout 30 --only-ports 80 --max-retries 5 --results 100 -d result_http --no-prompt
 
@@ -111,24 +112,25 @@ for line in $(cat 4_all_resolved.txt); do
 host $line | grep "has address" | grep $Domain >> IP.txt
 done
 cat IP.txt | cut -d " " -f 4 | sort -n | uniq > Full_IP.txt
-cat Full_IP.txt
+#cat Full_IP.txt
 echo "Total IP:" $(wc -l Full_IP.txt)
 
 python2 -m pip install censys-command-line
 echo -e "${R}Running Censys Scan...${NC}"
 censys --censys_api_id $API_ID --censys_api_secret $API_Secret --query_type ipv4 "443.https.tls.certificate.parsed.subject.common_name:$Domain or 443.https.tls.certificate.parsed.names:$Domain or 443.https.tls.certificate.parsed.extensions.subject_alt_name.dns_names:$Domain or 443.https.tls.certificate.parsed.subject_dn:$Domain" --fields ip protocols --append false > censys_result.txt
 cat censys_result.txt | grep ip | cut -d '"' -f 4 | sort -n | uniq > censys_IP.txt
-cat censys_IP.txt
+#cat censys_IP.txt
 echo "Total IP:" $(wc -l censys_IP.txt)
 
 echo -e "${R}Combining the Result...${NC}"
 cat Full_IP.txt censys_IP.txt | sort -n | uniq > All_IP.txt
-cat All_IP.txt
+#cat All_IP.txt
 echo "Total IP:" $(wc -l All_IP.txt)
 
 # UDP scan needs root privilege -sU
 echo -e "${R}Running Port Scanning...${NC}"
-nmap -iL All_IP.txt -Pn -p U:53,123,161,T:21,22,23,25,80,110,139,389,443,445,3306,3389 --open -oG result.gnmap > /dev/null 2>&1
+#nmap -iL All_IP.txt -Pn -p U:53,123,161,T:21,22,23,25,80,110,139,389,443,445,3306,3389 --open -oG result.gnmap > /dev/null 2>&1
+nmap -iL All_IP.txt -Pn -p 21,22,23,25,80,110,139,389,443,445,3306,3389 --open -oG result.gnmap > /dev/null 2>&1
 
 cat result.gnmap | grep Ports: | grep -oE "([0-9]{1,3}\.){3}[0-9]{1,3}|[0-9]+/[a-z]+\|*[a-z]+/[a-z]+" > summary.txt
 
@@ -151,7 +153,6 @@ do echo "Downloading" $repo; git clone https://github.com/$User/$repo; done
 
 # check if there is not repository to search
 if ! [[ $(find . -type d) == "." ]]; then
-
 # Find sensitive data inside repos using git
 for i in ./*/; do
 cd $i
@@ -159,14 +160,12 @@ git log -p > commits.txt
 cat commits.txt | grep "api\|key\|user\|uname\|pw\|pass\|mail\|credential\|login\|token\|secret" > secrets.txt
 cd ..
 done
-
 # Find sensitive data inside repos using trufflehog
 rm -f othersecrets.txt
 for i in ./*/; do
 python3 -m pip install truffleHog
 trufflehog --entropy=False --regex $i >> othersecrets.txt;
 done
-
 cd ..
 fi
 
