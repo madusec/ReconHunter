@@ -19,19 +19,19 @@ echo -e "Github Username: ${G}$User${NC}"
 
 echo -e "${G}########## Running Step 1 ##########${NC}"
 
-mkdir gotools 2> /dev/null
+mkdir gotools > /dev/null 2>&1
 export GOPATH=$PWD/gotools
 
 echo -e "${R}Running Crobat...${NC}"
-go get github.com/cgboal/sonarsearch/crobat
+go get github.com/cgboal/sonarsearch/crobat > /dev/null 2>&1
 gotools/bin/crobat -s $Domain > 1_passive_domains.txt
 
 echo -e "${R}Running Amass...${NC}"
-go get -v github.com/OWASP/Amass/v3/...
+go get -v github.com/OWASP/Amass/v3/... > /dev/null 2>&1
 gotools/bin/amass enum -passive -d $Domain >> 1_passive_domains.txt
 
 echo -e "${R}Running Subfinder...${NC}"
-GO111MODULE=on go get -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder
+GO111MODULE=on go get -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder > /dev/null 2>&1
 gotools/bin/subfinder -silent -d $Domain >> 1_passive_domains.txt
 
 echo -e "${R}Combining the Result...${NC}"
@@ -39,7 +39,7 @@ cat 1_passive_domains.txt | sort -n | uniq > tmp
 mv tmp 1_passive_domains.txt
 cat 1_passive_domains.txt
 
-go get github.com/OJ/gobuster/v3@latest
+go get github.com/OJ/gobuster/v3@latest > /dev/null 2>&1
 echo -e "${R}Running Resolving...${NC}"
 cat 1_passive_domains.txt | sed "s/.$Domain//g" > tmp
 gotools/bin/gobuster dns -d $Domain -t 10 -w tmp -o tmp1 -q
@@ -49,7 +49,7 @@ rm tmp tmp1
 echo -e "${G}########## Running Step 2 ##########${NC}"
 
 echo -e "${R}Running Brute Force...${NC}"
-wget https://raw.githubusercontent.com/OWASP/Amass/master/examples/wordlists/subdomains.lst -O words.txt
+wget https://raw.githubusercontent.com/OWASP/Amass/master/examples/wordlists/subdomains.lst -O words.txt -q
 gotools/bin/gobuster dns -d $Domain -t 10 -w words.txt -o tmp -q
 cat tmp | cut -d " " -f 2 > 3_resolved_brute_force.txt
 rm tmp
@@ -80,14 +80,14 @@ cat 4_all_resolved.txt
 echo -e "${G}########## Running Step 3 ##########${NC}"
 
 echo -e "${R}Running Sub-Domains Takeover...${NC}"
-go get github.com/Ice3man543/SubOver
-wget https://raw.githubusercontent.com/Ice3man543/SubOver/master/providers.json
+go get github.com/Ice3man543/SubOver > /dev/null 2>&1
+wget https://raw.githubusercontent.com/Ice3man543/SubOver/master/providers.json -q
 cat 1_passive_domains.txt 4_all_resolved.txt | sort -n | uniq > tmp
 gotools/bin/SubOver -l tmp
 rm tmp providers.json
 
 if [[ -z $(which nmap nmap/nmap) ]]; then
-git clone https://github.com/nmap/nmap
+git clone https://github.com/nmap/nmap > /dev/null 2>&1
 echo "Installing nmap..."
 cd nmap
 ./configure > /dev/null 2>&1 && make > /dev/null 2>&1
@@ -99,7 +99,7 @@ echo -e "${R}Running Screenshot Process...${NC}"
 nmap -iL 4_all_resolved.txt -p443 --open | grep "Nmap scan report" | cut -d " " -f 5 > https.txt
 nmap -iL 4_all_resolved.txt -p80 --open | grep "Nmap scan report" | cut -d " " -f 5 > http.txt
 
-git clone https://github.com/FortyNorthSecurity/EyeWitness
+git clone https://github.com/FortyNorthSecurity/EyeWitness > /dev/null 2>&1
 cd EyeWitness/Python/setup && bash setup.sh && cd ../../..
 python3 EyeWitness/Python/EyeWitness.py -f https.txt --timeout 30 --only-ports 443 --max-retries 5 --results 100 -d result_https --no-prompt
 python3 EyeWitness/Python/EyeWitness.py -f http.txt --timeout 30 --only-ports 80 --max-retries 5 --results 100 -d result_http --no-prompt
@@ -115,7 +115,7 @@ cat IP.txt | cut -d " " -f 4 | sort -n | uniq > Full_IP.txt
 #cat Full_IP.txt
 echo "Total IP:" $(wc -l Full_IP.txt)
 
-python2 -m pip install censys-command-line
+python2 -m pip install censys-command-line > /dev/null 2>&1
 echo -e "${R}Running Censys Scan...${NC}"
 censys --censys_api_id $API_ID --censys_api_secret $API_Secret --query_type ipv4 "443.https.tls.certificate.parsed.subject.common_name:$Domain or 443.https.tls.certificate.parsed.names:$Domain or 443.https.tls.certificate.parsed.extensions.subject_alt_name.dns_names:$Domain or 443.https.tls.certificate.parsed.subject_dn:$Domain" --fields ip protocols --append false > censys_result.txt
 cat censys_result.txt | grep ip | cut -d '"' -f 4 | sort -n | uniq > censys_IP.txt
@@ -148,7 +148,7 @@ curl -s https://api.github.com/users/$User/repos | grep 'full_name\|fork"' \
 | cut -d " " -f6 | cut -d "/" -f2 | cut -d '"' -f1 | cut -d "," -f1 | \
 while read line1; do read line2; echo $line1 $line2; done | \
 grep false | cut -d " " -f1 | while read repo;
-do echo "Downloading" $repo; git clone https://github.com/$User/$repo; done
+do echo "Downloading" $repo; git clone https://github.com/$User/$repo > /dev/null 2>&1; done
 
 # check if there is not repository to search
 if ! [[ $(find . -type d) == "." ]]; then
@@ -162,7 +162,7 @@ done
 # Find sensitive data inside repos using trufflehog
 rm -f othersecrets.txt
 for i in ./*/; do
-python3 -m pip install truffleHog
+python3 -m pip install truffleHog > /dev/null 2>&1
 trufflehog --entropy=False --regex $i >> othersecrets.txt;
 done
 cd ..
