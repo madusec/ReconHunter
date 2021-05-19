@@ -96,13 +96,8 @@ fi
 export PATH=$PATH:$PWD/nmap
 
 echo -e "${R}Running Screenshot Process...${NC}"
-nmap -iL 4_all_resolved.txt -p443 --open | grep "Nmap scan report" | cut -d " " -f 5 > https.txt
-nmap -iL 4_all_resolved.txt -p80 --open | grep "Nmap scan report" | cut -d " " -f 5 > http.txt
-
-git clone https://github.com/FortyNorthSecurity/EyeWitness > /dev/null 2>&1
-cd EyeWitness/Python/setup && bash setup.sh && cd ../../..
-python3 EyeWitness/Python/EyeWitness.py -f https.txt --timeout 30 --only-ports 443 --max-retries 5 --results 100 -d result_https --no-prompt | grep .
-python3 EyeWitness/Python/EyeWitness.py -f http.txt --timeout 30 --only-ports 80 --max-retries 5 --results 100 -d result_http --no-prompt | grep .
+GO111MODULE=on go get -v github.com/projectdiscovery/httpx/cmd/httpx > /dev/null 2>&1
+gotools/bin/httpx -title -tech-detect -status-code -title -follow-redirects -threads 5 -timeout 10
 
 echo -e "${G}########## Running Step 4 ##########${NC}"
 
