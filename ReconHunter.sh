@@ -23,7 +23,7 @@ mkdir gotools > /dev/null 2>&1
 export GOPATH=$PWD/gotools
 
 echo -e "${R}Running Crobat...${NC}"
-go get github.com/cgboal/sonarsearch/crobat > /dev/null 2>&1
+go get github.com/cgboal/sonarsearch/crobat
 gotools/bin/crobat -s $Domain > 1_passive_domains.txt
 
 echo -e "${R}Running Amass...${NC}"
