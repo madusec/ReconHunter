@@ -60,7 +60,7 @@ cat 3_resolved_brute_force.txt 2_resolved_passive_domains.txt | sort -n | uniq >
 
 # Remove Wildcard Domains
 cat 4_all_resolved.txt | while read line; do if [[ $(dig *.$line +short) ]]; then echo $line >> tmp ;fi; done
-cat 4_all_resolved.txt tmp | sort -n | uniq -u > 4_all_resolved_no_wildcard.txt > /dev/null 2>&1
+cat 4_all_resolved.txt tmp 2> /dev/null | sort -n | uniq -u > 4_all_resolved_no_wildcard.txt
 rm -f tmp
 
 #python2 -m pip install py-altdns
@@ -97,7 +97,7 @@ export PATH=$PATH:$PWD/nmap
 
 echo -e "${R}Running Screenshot Process...${NC}"
 GO111MODULE=on go get -v github.com/projectdiscovery/httpx/cmd/httpx > /dev/null 2>&1
-gotools/bin/httpx -title -tech-detect -status-code -title -follow-redirects -threads 5 -timeout 10
+cat 4_all_resolved.txt | gotools/bin/httpx -title -tech-detect -status-code -title -follow-redirects -threads 5 -timeout 10
 
 echo -e "${G}########## Running Step 4 ##########${NC}"
 
