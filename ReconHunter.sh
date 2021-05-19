@@ -73,9 +73,9 @@ rm -f tmp
 #rm tmp tmp1
 
 echo -e "${R}Combining the Result...${NC}"
-cat 5_resolved_altdns.txt 4_all_resolved.txt | sort -n | uniq > tmp
+cat 5_resolved_altdns.txt 4_all_resolved.txt | sort -n | uniq > tmp > /dev/null 2>&1
 mv tmp 4_all_resolved.txt
-cat 4_all_resolved.txt
+#cat 4_all_resolved.txt
 
 echo -e "${G}########## Running Step 3 ##########${NC}"
 
@@ -134,7 +134,7 @@ nmap -iL All_IP.txt -Pn -p U:53,123,161,T:21,22,23,25,80,110,139,389,443,445,330
 cat result.gnmap | grep Ports: | grep -oE "([0-9]{1,3}\.){3}[0-9]{1,3}|[0-9]+/[a-z]+\|*[a-z]+/[a-z]+" > summary.txt
 
 echo -e "${R}Running the Summary Version...${NC}"
-cat summary.txt | while read line; do if [[ $line != *"open"* ]]; then echo ""; echo -e "${G}$line${NC}"; else echo $line;fi; done
+#cat summary.txt | while read line; do if [[ $line != *"open"* ]]; then echo ""; echo -e "${G}$line${NC}"; else echo $line;fi; done
 
 echo -e "${G}########## Running Step 5 ##########${NC}"
 
