@@ -101,8 +101,8 @@ nmap -iL 4_all_resolved.txt -p80 --open | grep "Nmap scan report" | cut -d " " -
 
 git clone https://github.com/FortyNorthSecurity/EyeWitness > /dev/null 2>&1
 cd EyeWitness/Python/setup && bash setup.sh && cd ../../..
-python3 EyeWitness/Python/EyeWitness.py -f https.txt --timeout 30 --only-ports 443 --max-retries 5 --results 100 -d result_https --no-prompt
-python3 EyeWitness/Python/EyeWitness.py -f http.txt --timeout 30 --only-ports 80 --max-retries 5 --results 100 -d result_http --no-prompt
+python3 EyeWitness/Python/EyeWitness.py -f https.txt --timeout 30 --only-ports 443 --max-retries 5 --results 100 -d result_https --no-prompt | grep .
+python3 EyeWitness/Python/EyeWitness.py -f http.txt --timeout 30 --only-ports 80 --max-retries 5 --results 100 -d result_http --no-prompt | grep .
 
 echo -e "${G}########## Running Step 4 ##########${NC}"
 
