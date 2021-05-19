@@ -96,13 +96,13 @@ fi
 export PATH=$PATH:$PWD/nmap
 
 echo -e "${R}Running Screenshot Process...${NC}"
-#nmap -iL 4_all_resolved.txt -p443 --open | grep "Nmap scan report" | cut -d " " -f 5 > https.txt
-#nmap -iL 4_all_resolved.txt -p80 --open | grep "Nmap scan report" | cut -d " " -f 5 > http.txt
+nmap -iL 4_all_resolved.txt -p443 --open | grep "Nmap scan report" | cut -d " " -f 5 > https.txt
+nmap -iL 4_all_resolved.txt -p80 --open | grep "Nmap scan report" | cut -d " " -f 5 > http.txt
 
-#git clone https://github.com/FortyNorthSecurity/EyeWitness
-#cd EyeWitness/Python/setup && bash setup.sh && cd ..
-#python3 EyeWitness/Python/EyeWitness.py -f https.txt --timeout 30 --only-ports 443 --max-retries 5 --results 100 -d result_https --no-prompt
-#python3 EyeWitness/Python/EyeWitness.py -f http.txt --timeout 30 --only-ports 80 --max-retries 5 --results 100 -d result_http --no-prompt
+git clone https://github.com/FortyNorthSecurity/EyeWitness
+cd EyeWitness/Python/setup && bash setup.sh && cd ../../..
+python3 EyeWitness/Python/EyeWitness.py -f https.txt --timeout 30 --only-ports 443 --max-retries 5 --results 100 -d result_https --no-prompt
+python3 EyeWitness/Python/EyeWitness.py -f http.txt --timeout 30 --only-ports 80 --max-retries 5 --results 100 -d result_http --no-prompt
 
 echo -e "${G}########## Running Step 4 ##########${NC}"
 
@@ -129,8 +129,7 @@ echo "Total IP:" $(wc -l All_IP.txt)
 
 # UDP scan needs root privilege -sU
 echo -e "${R}Running Port Scanning...${NC}"
-#nmap -iL All_IP.txt -Pn -p U:53,123,161,T:21,22,23,25,80,110,139,389,443,445,3306,3389 --open -oG result.gnmap > /dev/null 2>&1
-nmap -iL All_IP.txt -Pn -p 21,22,23,25,80,110,139,389,443,445,3306,3389 --open -oG result.gnmap > /dev/null 2>&1
+nmap -iL All_IP.txt -Pn -p U:53,123,161,T:21,22,23,25,80,110,139,389,443,445,3306,3389 --open -oG result.gnmap > /dev/null 2>&1
 
 cat result.gnmap | grep Ports: | grep -oE "([0-9]{1,3}\.){3}[0-9]{1,3}|[0-9]+/[a-z]+\|*[a-z]+/[a-z]+" > summary.txt
 
