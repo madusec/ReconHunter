@@ -73,7 +73,7 @@ rm -f tmp
 #rm tmp tmp1
 
 echo -e "${R}Combining the Result...${NC}"
-cat 5_resolved_altdns.txt 4_all_resolved.txt | sort -n | uniq > tmp > /dev/null 2>&1
+cat 5_resolved_altdns.txt 4_all_resolved.txt 2> /dev/null | sort -n | uniq > tmp
 mv tmp 4_all_resolved.txt
 #cat 4_all_resolved.txt
 
