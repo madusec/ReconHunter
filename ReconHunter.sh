@@ -24,47 +24,54 @@ export GOPATH=$PWD/gotools
 
 echo -e "${R}Running Crobat...${NC}"
 go get github.com/cgboal/sonarsearch/crobat > /dev/null 2>&1
-gotools/bin/crobat -s $Domain > 1_passive_domains.txt
+gotools/bin/crobat -s $Domain > crobat.txt
 
 echo -e "${R}Running Amass...${NC}"
 go get -v github.com/OWASP/Amass/v3/... > /dev/null 2>&1
-gotools/bin/amass enum -passive -d $Domain >> 1_passive_domains.txt
+gotools/bin/amass enum -passive -d $Domain > amass.txt
 
 echo -e "${R}Running Subfinder...${NC}"
 GO111MODULE=on go get -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder > /dev/null 2>&1
-gotools/bin/subfinder -silent -d $Domain >> 1_passive_domains.txt
+gotools/bin/subfinder -silent -d $Domain > subfinder.txt
 
 echo -e "${R}Combining the Result...${NC}"
-cat 1_passive_domains.txt | sort -n | uniq > tmp
-mv tmp 1_passive_domains.txt
-#cat 1_passive_domains.txt
+cat crobat.txt amass.txt subfinder.txt | sort -n | uniq > 1_passive_domains.txt
 
 echo -e "${R}Running Resolving...${NC}"
 go get github.com/OJ/gobuster/v3@latest > /dev/null 2>&1
 cat 1_passive_domains.txt | sed "s/.$Domain//g" > tmp
-gotools/bin/gobuster dns -d $Domain -t 10 -w tmp -o tmp1 -q
+gotools/bin/gobuster dns -d $Domain -t 10 -w tmp -o tmp1 -q > /dev/null 2>&1
 cat tmp1 | cut -d " " -f 2 > 2_resolved_passive_domains.txt
-rm tmp tmp1
+rm -f tmp tmp1
+
+echo "Running Crobat..." > detailed_report.txt
+cat crobat.txt >> detailed_report.txt
+echo "Running Amass..." >> detailed_report.txt
+cat amass.txt >> detailed_report.txt
+echo "Running Subfinder..." >> detailed_report.txt
+cat subfinder.txt >> detailed_report.txt
+echo "Combining the Result..." >> detailed_report.txt
+cat 1_passive_domains.txt >> detailed_report.txt
+echo "Running Resolving..." >> detailed_report.txt
+cat 2_resolved_passive_domains.txt >> detailed_report.txt
 
 echo -e "${G}########## Running Step 2 ##########${NC}"
 
 echo -e "${R}Running Brute Force...${NC}"
 wget https://raw.githubusercontent.com/OWASP/Amass/master/examples/wordlists/subdomains.lst -O words.txt -q
-gotools/bin/gobuster dns -d $Domain -t 10 -w words.txt -o tmp -q
+gotools/bin/gobuster dns -d $Domain -t 10 -w words.txt -o tmp -q > /dev/null 2>&1
 cat tmp | cut -d " " -f 2 > 3_resolved_brute_force.txt
-rm tmp
+rm -f tmp
 
 echo -e "${R}Combining the Result...${NC}"
 cat 3_resolved_brute_force.txt 2_resolved_passive_domains.txt | sort -n | uniq > 4_all_resolved.txt
-#cat 4_all_resolved.txt
 
-# Remove Wildcard Domains
-cat 4_all_resolved.txt | while read line; do if [[ $(dig *.$line +short) ]]; then echo $line >> tmp ;fi; done
-cat 4_all_resolved.txt tmp 2> /dev/null | sort -n | uniq -u > 4_all_resolved_no_wildcard.txt
-rm -f tmp
+echo "Remove Wildcard..."
+cat 4_all_resolved.txt | while read line; do if [[ $(dig *.$line +short) ]]; then echo $line >> wildcard.txt ;fi; done
+cat 4_all_resolved.txt wildcard.txt 2> /dev/null | sort -n | uniq -u > 4_all_resolved_no_wildcard.txt
 
-#python2 -m pip install py-altdns
 #echo -e "${R}Running Altdns...${NC}"
+#python2 -m pip install py-altdns
 #python2 $(which altdns) -i 4_all_resolved_no_wildcard.txt -o tmp -w words.txt
 #cat tmp | sed "s/.$Domain//g" > tmp1
 #rm tmp
@@ -73,16 +80,24 @@ rm -f tmp
 #rm tmp tmp1
 
 echo -e "${R}Combining the Result...${NC}"
-cat 5_resolved_altdns.txt 4_all_resolved.txt 2> /dev/null | sort -n | uniq > tmp
-mv tmp 4_all_resolved.txt
-#cat 4_all_resolved.txt
+cat 5_resolved_altdns.txt 4_all_resolved.txt 2> /dev/null | sort -n | uniq > 4_full_resolved.txt
+
+echo "Runnning Brute Force..." >> detailed_report.txt
+cat 3_resolved_brute_force.txt >> detailed_report.txt
+echo "Combining the Result..." >> detailed_report.txt
+cat 4_all_resolved.txt >> detailed_report.txt
+echo "Remove Wildcard..." >> detailed_report.txt
+cat wildcard.txt >> detailed_report.txt
+echo "Runningd Altdns..." >> detailed_report.txt
+echo "Combining the Result..." >> detailed_report.txt
+cat 4_full_resolved.txt >> detailed_report.txt
 
 echo -e "${G}########## Running Step 3 ##########${NC}"
 
 echo -e "${R}Running Sub-Domains Takeover...${NC}"
 go get github.com/Ice3man543/SubOver > /dev/null 2>&1
 wget https://raw.githubusercontent.com/Ice3man543/SubOver/master/providers.json -q
-cat 1_passive_domains.txt 4_all_resolved.txt | sort -n | uniq > tmp
+cat 1_passive_domains.txt 4_full_resolved.txt | sort -n | uniq > tmp
 gotools/bin/SubOver -l tmp
 rm tmp providers.json
 
@@ -97,13 +112,13 @@ export PATH=$PATH:$PWD/nmap
 
 echo -e "${R}Running Screenshot Process...${NC}"
 GO111MODULE=on go get -v github.com/projectdiscovery/httpx/cmd/httpx > /dev/null 2>&1
-cat 4_all_resolved.txt | gotools/bin/httpx -title -tech-detect -status-code -title -follow-redirects -threads 5 -timeout 10
+cat 4_full_resolved.txt | gotools/bin/httpx -title -tech-detect -status-code -title -follow-redirects -threads 5 -timeout 10
 
 echo -e "${G}########## Running Step 4 ##########${NC}"
 
 echo -e "${R}Running IP Resolving...${NC}"
 rm -f IP.txt
-for line in $(cat 4_all_resolved.txt); do
+for line in $(cat 4_full_resolved.txt); do
 host $line | grep "has address" | grep $Domain >> IP.txt
 done
 cat IP.txt | cut -d " " -f 4 | sort -n | uniq > Full_IP.txt
