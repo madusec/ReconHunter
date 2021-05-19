@@ -60,7 +60,7 @@ cat 3_resolved_brute_force.txt 2_resolved_passive_domains.txt | sort -n | uniq >
 
 # Remove Wildcard Domains
 cat 4_all_resolved.txt | while read line; do if [[ $(dig *.$line +short) ]]; then echo $line >> tmp ;fi; done
-cat 4_all_resolved.txt tmp | sort -n | uniq -u > 4_all_resolved_no_wildcard.txt
+cat 4_all_resolved.txt tmp | sort -n | uniq -u > 4_all_resolved_no_wildcard.txt > /dev/null 2>&1
 rm -f tmp
 
 #python2 -m pip install py-altdns
