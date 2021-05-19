@@ -23,7 +23,7 @@ mkdir gotools > /dev/null 2>&1
 export GOPATH=$PWD/gotools
 
 echo -e "${R}Running Crobat...${NC}"
-go get github.com/cgboal/sonarsearch/crobat
+go get github.com/cgboal/sonarsearch/crobat > /dev/null 2>&1
 gotools/bin/crobat -s $Domain > 1_passive_domains.txt
 
 echo -e "${R}Running Amass...${NC}"
@@ -37,10 +37,10 @@ gotools/bin/subfinder -silent -d $Domain >> 1_passive_domains.txt
 echo -e "${R}Combining the Result...${NC}"
 cat 1_passive_domains.txt | sort -n | uniq > tmp
 mv tmp 1_passive_domains.txt
-cat 1_passive_domains.txt
+#cat 1_passive_domains.txt
 
-go get github.com/OJ/gobuster/v3@latest > /dev/null 2>&1
 echo -e "${R}Running Resolving...${NC}"
+go get github.com/OJ/gobuster/v3@latest > /dev/null 2>&1
 cat 1_passive_domains.txt | sed "s/.$Domain//g" > tmp
 gotools/bin/gobuster dns -d $Domain -t 10 -w tmp -o tmp1 -q
 cat tmp1 | cut -d " " -f 2 > 2_resolved_passive_domains.txt
@@ -56,12 +56,12 @@ rm tmp
 
 echo -e "${R}Combining the Result...${NC}"
 cat 3_resolved_brute_force.txt 2_resolved_passive_domains.txt | sort -n | uniq > 4_all_resolved.txt
-cat 4_all_resolved.txt
+#cat 4_all_resolved.txt
 
 # Remove Wildcard Domains
 cat 4_all_resolved.txt | while read line; do if [[ $(dig *.$line +short) ]]; then echo $line >> tmp ;fi; done
 cat 4_all_resolved.txt tmp | sort -n | uniq -u > 4_all_resolved_no_wildcard.txt
-rm tmp
+rm -f tmp
 
 #python2 -m pip install py-altdns
 #echo -e "${R}Running Altdns...${NC}"
