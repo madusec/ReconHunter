@@ -100,15 +100,6 @@ wget https://raw.githubusercontent.com/Ice3man543/SubOver/master/providers.json 
 cat 1_passive_domains.txt 4_full_resolved.txt | sort -n | uniq > test_takeover.txt
 gotools/bin/SubOver -l test_takeover.txt | tee -a result_takeover.txt
 
-if [[ -z $(which nmap nmap/nmap) ]]; then
-git clone https://github.com/nmap/nmap > /dev/null 2>&1
-echo "Installing nmap..."
-cd nmap
-./configure > /dev/null 2>&1 && make > /dev/null 2>&1
-cd ..
-fi
-export PATH=$PATH:$PWD/nmap
-
 echo -e "${R}Running Screenshot Process...${NC}"
 GO111MODULE=on go get -v github.com/projectdiscovery/httpx/cmd/httpx > /dev/null 2>&1
 cat 4_full_resolved.txt | gotools/bin/httpx -title -tech-detect -status-code -title -follow-redirects -threads 5 -timeout 10 | tee -a screenshots.txt
@@ -139,6 +130,15 @@ echo "Total IP:" $(wc -l censys_IP.txt)
 echo -e "${R}Combining the Result...${NC}"
 cat Full_IP.txt censys_IP.txt | sort -n | uniq > All_IP.txt
 echo "Total IP:" $(wc -l All_IP.txt)
+
+if [[ -z $(which nmap nmap/nmap) ]]; then
+git clone https://github.com/nmap/nmap > /dev/null 2>&1
+echo "Installing nmap..."
+cd nmap
+./configure > /dev/null 2>&1 && make > /dev/null 2>&1
+cd ..
+fi
+export PATH=$PATH:$PWD/nmap
 
 echo -e "${R}Running Port Scanning...${NC}"
 nmap -iL All_IP.txt -Pn -p U:53,123,161,T:21,22,23,25,80,110,139,389,443,445,3306,3389 --open -oG result.gnmap > /dev/null 2>&1
