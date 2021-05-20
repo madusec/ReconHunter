@@ -51,7 +51,7 @@ cat tmp | cut -d " " -f 2 > SubDomains_Discovery/Resolved_BruteForce.txt
 rm -f tmp
 
 echo -e "${R}Combining the Result (Passive, BruteForce)...${NC}"
-cat SubDomains_Discovery/Resolved_Passive-Subdomains SubDomains_Discovery/Resolved_BruteForce | sort -n | uniq > SubDomains_Discovery/Final_Resolved_Subdomains.txt
+cat SubDomains_Discovery/Resolved_Passive-Subdomains.txt SubDomains_Discovery/Resolved_BruteForce.txt | sort -n | uniq > SubDomains_Discovery/Final_Resolved_Subdomains.txt
 
 #echo "Remove Wildcard..."
 #cat 4_all_resolved.txt | while read line; do if [[ $(dig *.$line +short) ]]; then echo $line >> wildcard.txt ;fi; done
