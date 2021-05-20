@@ -185,12 +185,22 @@ cd ..
 done
 # Find sensitive data inside repos using trufflehog
 rm -f othersecrets.txt
-for i in ./*/; do
 python3 -m pip install truffleHog > /dev/null 2>&1
+for i in ./*/; do
 trufflehog --entropy=False --regex $i >> othersecrets.txt;
 done
 cd ..
 fi
+
+echo "Github TruffleHog..." >> detailed_report.txt
+cat github_dirs/othersecrets.txt >> detailed_report.txt
+echo "Github Secrets..." >> detailed_report.txt
+cd github_dirs
+for i in ./*/; do
+echo "Entering " $i " ..." >> detailed_report.txt
+cd $i && cat secrets.txt >> detailed_report.txt && cd ..
+done
+cd ..
 
 echo -e "${G}########## Running Step 6 ##########${NC}"
 
