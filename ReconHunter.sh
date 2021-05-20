@@ -118,7 +118,7 @@ nmap -iL IP_Scanning/Final_IPs.txt -Pn -p U:53,123,161,T:21,22,23,25,80,110,139,
 cat IP_Scanning/Result.gnmap | grep Ports: | grep -oE "([0-9]{1,3}\.){3}[0-9]{1,3}|[0-9]+/[a-z]+\|*[a-z]+/[a-z]+" > IP_Scanning/Summary.txt
 
 echo -e "${R}Running the Summary Version...${NC}"
-cat IP_Scanning/summary.txt | while read line; do if [[ $line != *"open"* ]]; then echo ""; echo -e "${G}$line${NC}"; else echo $line;fi; done
+cat IP_Scanning/Summary.txt | while read line; do if [[ $line != *"open"* ]]; then echo ""; echo -e "${G}$line${NC}"; else echo $line;fi; done
 
 echo -e "${G}########## Running Step 4 ##########${NC}"
 
@@ -153,7 +153,7 @@ echo -e "${G}########## Running Step 6 ##########${NC}"
 
 echo -e "${R}Running Cloud Recon...${NC}"
 cd Tools
-git clone https://github.com/gwen001/s3-buckets-finder
+git clone https://github.com/gwen001/s3-buckets-finder > /dev/null 2>&1
 cd ../Cloud_Scanning
 # Download wordlist then apply permutations on it
 wget -q https://raw.githubusercontent.com/nahamsec/lazys3/master/common_bucket_prefixes.txt -O Common_Bucket_Prefixes.txt
