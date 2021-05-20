@@ -88,7 +88,7 @@ echo -e "${R}Running IP Resolving...${NC}"
 for line in $(cat SubDomains_Discovery/Final_Resolved_Subdomains.txt); do
 host $line | grep "has address" | grep $Domain >> IP_Scanning/IP.txt
 done
-cat IP.txt | cut -d " " -f 4 | sort -n | uniq > IP_Scanning/Resolved_IPs.txt
+cat IP_Scanning/IP.txt | cut -d " " -f 4 | sort -n | uniq > IP_Scanning/Resolved_IPs.txt
 echo "Total IP:" $(wc -l IP_Scanning/Resolved_IPs.txt)
 rm IP_Scanning/IP.txt
 
