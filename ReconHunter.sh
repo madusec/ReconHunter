@@ -4,7 +4,7 @@ G='\033[1;32m'
 R='\033[1;31m'
 NC='\033[0m'
 
-if [ "$#" -ne 4 ]; then
+if [ "$#" -ne 2 ]; then
   echo -e "You must run the tool like that: ${G}$0 Domain_Name Github_User${NC}"
   exit 0
 fi
