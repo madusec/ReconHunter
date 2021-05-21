@@ -19,7 +19,8 @@ AWSSecretKey=
 echo -e "Target Domain: ${G}$Domain${NC}"
 echo -e "Github Username: ${G}$User${NC}"
 
-apt-get install golang-go -y
+echo "Running Setup..."
+apt-get install golang-go -y > /dev/null 2>&1
 export GOPATH=$PWD/Tools/gotools
 rm -rf Tools SubDomains_Discovery SubDomains_Scanning IP_Scanning Github_Scanning Cloud_Scanning
 mkdir Tools SubDomains_Discovery SubDomains_Scanning IP_Scanning Github_Scanning Cloud_Scanning
@@ -27,22 +28,30 @@ mkdir Tools SubDomains_Discovery SubDomains_Scanning IP_Scanning Github_Scanning
 echo -e "${G}########## Running Step 1 ##########${NC}"
 
 echo -e "${R}Running Sonar Project...${NC}"
+echo "Downloading..."
 go get github.com/cgboal/sonarsearch/crobat > /dev/null 2>&1
+echo "Running..."
 Tools/gotools/bin/crobat -s $Domain > SubDomains_Discovery/Sonar_Project.txt
 
 echo -e "${R}Running Amass...${NC}"
+echo "Downloading..."
 go get -v github.com/OWASP/Amass/cmd/amass > /dev/null 2>&1
+echo "Running..."
 Tools/gotools/bin/amass enum -passive -d $Domain > SubDomains_Discovery/Amass.txt
 
 echo -e "${R}Running Subfinder...${NC}"
+echo "Downloading..."
 GO111MODULE=on go get -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder > /dev/null 2>&1
+echo "Running..."
 Tools/gotools/bin/subfinder -silent -d $Domain > SubDomains_Discovery/Subfinder.txt
 
 echo -e "${R}Combining the Result (Sonar Project, Amass, Subfinder)...${NC}"
 cat SubDomains_Discovery/*.txt | sort -n | uniq > SubDomains_Discovery/Passive_Subdomains.txt
 
 echo -e "${R}Running Subdomains Resolving...${NC}"
+echo "Downloading..."
 go get github.com/OJ/gobuster/v3@latest > /dev/null 2>&1
+echo "Running..."
 cat SubDomains_Discovery/Passive_Subdomains.txt | sed "s/.$Domain//g" > tmp
 Tools/gotools/bin/gobuster dns -d $Domain -t 10 -w tmp -o tmp1 -q > /dev/null 2>&1
 cat tmp1 | cut -d " " -f 2 > SubDomains_Discovery/Resolved_Passive-Subdomains.txt
