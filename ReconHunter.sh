@@ -13,6 +13,8 @@ Domain=$1
 User=$2
 API_ID=$3
 API_Secret=$4
+AWSAccessKeyId=
+AWSSecretKey=
 
 echo -e "Target Domain: ${G}$Domain${NC}"
 echo -e "Github Username: ${G}$User${NC}"
@@ -152,6 +154,10 @@ fi
 echo -e "${G}########## Running Step 6 ##########${NC}"
 
 echo -e "${R}Running Cloud Recon...${NC}"
+apt-get update
+apt-get -y install awscli php php-curl
+printf "$AWSAccessKeyId\n$AWSSecretKey\nus-west-1\njson\n" | aws configure
+
 cd Tools
 git clone https://github.com/gwen001/s3-buckets-finder > /dev/null 2>&1
 cd ../Cloud_Scanning
