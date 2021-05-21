@@ -31,7 +31,7 @@ go get github.com/cgboal/sonarsearch/crobat > /dev/null 2>&1
 Tools/gotools/bin/crobat -s $Domain > SubDomains_Discovery/Sonar_Project.txt
 
 echo -e "${R}Running Amass...${NC}"
-go get -v github.com/OWASP/Amass/v3/... > /dev/null 2>&1
+go get -v github.com/OWASP/Amass/cmd/amass > /dev/null 2>&1
 Tools/gotools/bin/amass enum -passive -d $Domain > SubDomains_Discovery/Amass.txt
 
 echo -e "${R}Running Subfinder...${NC}"
