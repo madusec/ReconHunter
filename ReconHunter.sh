@@ -18,6 +18,8 @@ AWSSecretKey=
 
 echo -e "Target Domain: ${G}$Domain${NC}"
 echo -e "Github Username: ${G}$User${NC}"
+
+apt-get install golang-go -y
 export GOPATH=$PWD/Tools/gotools
 rm -rf Tools SubDomains_Discovery SubDomains_Scanning IP_Scanning Github_Scanning Cloud_Scanning
 mkdir Tools SubDomains_Discovery SubDomains_Scanning IP_Scanning Github_Scanning Cloud_Scanning
