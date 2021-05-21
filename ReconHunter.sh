@@ -35,7 +35,7 @@ Tools/gotools/bin/crobat -s $Domain > SubDomains_Discovery/Sonar_Project.txt
 
 echo -e "${R}Running Amass...${NC}"
 echo "Downloading..."
-go get -v github.com/OWASP/Amass/cmd/amass > /dev/null 2>&1
+GO111MODULE=on go get -v github.com/OWASP/Amass/v3/... > /dev/null 2>&1
 echo "Running..."
 Tools/gotools/bin/amass enum -passive -d $Domain > SubDomains_Discovery/Amass.txt
 
