@@ -5,14 +5,14 @@ R='\033[1;31m'
 NC='\033[0m'
 
 if [ "$#" -ne 4 ]; then
-  echo -e "You must run the tool like that: ${G}$0 Domain_Name Github_User Censys_API_ID Censys_API_Secret${NC}"
+  echo -e "You must run the tool like that: ${G}$0 Domain_Name Github_User${NC}"
   exit 0
 fi
 
 Domain=$1
 User=$2
-API_ID=$3
-API_Secret=$4
+API_ID=
+API_Secret=
 AWSAccessKeyId=
 AWSSecretKey=
 
