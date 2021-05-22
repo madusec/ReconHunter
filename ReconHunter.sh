@@ -20,10 +20,12 @@ echo -e "Target Domain: ${G}$Domain${NC}"
 echo -e "Github Username: ${G}$User${NC}"
 
 echo "Running Setup..."
-apt-get install golang-go -y > /dev/null 2>&1
-export GOPATH=$PWD/Tools/gotools
 rm -rf Tools SubDomains_Discovery SubDomains_Scanning IP_Scanning Github_Scanning Cloud_Scanning
 mkdir Tools SubDomains_Discovery SubDomains_Scanning IP_Scanning Github_Scanning Cloud_Scanning
+cd Tools && wget https://golang.org/dl/go1.16.4.linux-amd64.tar.gz
+tar -xf go1.16.4.linux-amd64.tar.gz && cd ..
+export PATH=$PWD/Tools/go/bin/:$PATH
+export GOPATH=$PWD/Tools/gotools
 
 echo -e "${G}########## Running Step 1 ##########${NC}"
 
@@ -35,7 +37,7 @@ Tools/gotools/bin/crobat -s $Domain > SubDomains_Discovery/Sonar_Project.txt
 
 echo -e "${R}Running Amass...${NC}"
 echo "Downloading..."
-GO111MODULE=on go get -v github.com/OWASP/Amass/v3/... > /dev/null 2>&1
+go get -v github.com/OWASP/Amass/v3/... > /dev/null 2>&1
 echo "Running..."
 Tools/gotools/bin/amass enum -passive -d $Domain > SubDomains_Discovery/Amass.txt
 
