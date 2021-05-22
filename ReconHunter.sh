@@ -110,7 +110,6 @@ rm IP_Scanning/IP.txt
 apt-get install python3 python3-pip > /dev/null 2>&1
 python3 -m pip install censys > /dev/null 2>&1
 echo -e "${R}Running Censys Scan...${NC}"
-censys --censys_api_id $API_ID --censys_api_secret $API_Secret
 printf "$API_ID\n$API_Secret\n" | censys config
 censys search --index-type ipv4 -q "443.https.tls.certificate.parsed.subject.common_name:$Domain or 443.https.tls.certificate.parsed.names:$Domain or 443.https.tls.certificate.parsed.extensions.subject_alt_name.dns_names:$Domain or 443.https.tls.certificate.parsed.subject_dn:$Domain" --fields ip protocols --overwrite > IP_Scanning/Censys_Result.txt
 cat IP_Scanning/Censys_Result.txt | grep ip | cut -d '"' -f 4 | sort -n | uniq > IP_Scanning/Censys_IPs.txt
