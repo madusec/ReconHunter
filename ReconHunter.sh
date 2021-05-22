@@ -4,13 +4,14 @@ G='\033[1;32m'
 R='\033[1;31m'
 NC='\033[0m'
 
-if [ "$#" -ne 2 ]; then
-  echo -e "You must run the tool like that: ${G}$0 Domain_Name Github_User${NC}"
+if [ "$#" -ne 1 ]; then
+  echo -e "You must run the tool like that: ${G}$0 Domain_Name"
   exit 0
 fi
 
 Domain=$1
-User=$2
+# GitHub Username to check for secrets
+User=
 # Censys: https://censys.io/account/api
 API_ID=
 API_Secret=
@@ -141,14 +142,16 @@ cat IP_Scanning/IP.txt | cut -d " " -f 4 | sort -n | uniq > IP_Scanning/Resolved
 echo "Total IP:" $(wc -l IP_Scanning/Resolved_IPs.txt)
 rm IP_Scanning/IP.txt
 
+if [[ $API_ID ]] && [[ $API_Secret ]]; then
 echo -e "${R}Running Censys Scan...${NC}"
 printf "$API_ID\n$API_Secret\n" | censys config > /dev/null 2>&1
 censys search --index-type ipv4 -q "443.https.tls.certificate.parsed.subject.common_name:$Domain or 443.https.tls.certificate.parsed.names:$Domain or 443.https.tls.certificate.parsed.extensions.subject_alt_name.dns_names:$Domain or 443.https.tls.certificate.parsed.subject_dn:$Domain" --fields ip protocols --overwrite > IP_Scanning/Censys_Result.txt
 cat IP_Scanning/Censys_Result.txt | grep ip | cut -d '"' -f 4 | sort -n | uniq > IP_Scanning/Censys_IPs.txt
 echo "Total IP:" $(wc -l IP_Scanning/Censys_IPs.txt)
+fi
 
 echo -e "${R}Combining the Result (Resolved IPs, Censys IPs)...${NC}"
-cat IP_Scanning/Resolved_IPs.txt IP_Scanning/Censys_IPs.txt | sort -n | uniq > IP_Scanning/Final_IPs.txt
+cat IP_Scanning/Resolved_IPs.txt IP_Scanning/Censys_IPs.txt 2>/dev/null | sort -n | uniq > IP_Scanning/Final_IPs.txt
 echo "Total IP:" $(wc -l IP_Scanning/Final_IPs.txt)
 
 echo -e "${R}Running Port Scanning...${NC}"
@@ -159,8 +162,9 @@ cat IP_Scanning/Result.gnmap | grep Ports: | grep -oE "([0-9]{1,3}\.){3}[0-9]{1,
 echo -e "${R}Running the Summary Version...${NC}"
 cat IP_Scanning/Summary.txt | while read line; do if [[ $line != *"open"* ]]; then echo ""; echo -e "${G}$line${NC}"; else echo $line;fi; done
 
-echo -e "${G}########## Running Step 4 ##########${NC}"
+if [[ $User ]]; then
 
+echo -e "${G}########## Running Step 4 ##########${NC}"
 echo -e "${R}Running Github Recon...${NC}"
 cd Github_Scanning
 # Find the repos owned by the target organization (not forked), then clone these repos locally
@@ -185,9 +189,11 @@ trufflehog --entropy=False --regex $i >> Trufflehog_Secrets.txt;
 done
 cd ..
 fi
+fi
+
+if [[ $AWSAccessKeyId ]] && [[ $AWSSecretKey ]]; then
 
 echo -e "${G}########## Running Step 6 ##########${NC}"
-
 echo -e "${R}Running Cloud Recon...${NC}"
 printf "$AWSAccessKeyId\n$AWSSecretKey\nus-west-1\njson\n" | aws configure > /dev/null 2>&1
 
@@ -209,3 +215,5 @@ done; done
 cd ../Tools/s3-buckets-finder
 php s3-buckets-bruteforcer.php --bucket ../../Cloud_Scanning/AWS_Wordlist.txt --verbosity 1
 cd ../../
+
+fi
