@@ -11,10 +11,50 @@ fi
 
 Domain=$1
 User=$2
+# Censys: https://censys.io/account/api
 API_ID=
 API_Secret=
+# AWS: https://console.aws.amazon.com/iam/home?region=us-east-2#/security_credentials
 AWSAccessKeyId=
 AWSSecretKey=
+# BinaryEdge: https://app.binaryedge.io/account/api
+BinaryEdge=
+# DNSDB: https://www.farsightsecurity.com/dnsdb-community-edition/
+# It has 30-day renewal (with valid email confirmation)
+DNSDB=
+# GitHub: https://github.com/settings/tokens
+GitHub=
+# SecurityTrails: https://securitytrails.com/app/account/credentials
+SecurityTrails=
+# VirusTotal: https://www.virustotal.com/gui/user/username/apikey
+VirusTotal=
+
+cat <<EOT >> config.ini
+[data_sources]
+[data_sources.VirusTotal]
+[data_sources.VirusTotal.Credentials]
+apikey = $VirusTotal
+[data_sources.SecurityTrails]
+[data_sources.SecurityTrails.Credentials]
+apikey = $SecurityTrails
+[data_sources.GitHub]
+[data_sources.GitHub.accountname]
+apikey = $GitHub
+[data_sources.DNSDB]
+[data_sources.DNSDB.Credentials]
+apikey = $DNSDB
+[data_sources.BinaryEdge]
+[data_sources.BinaryEdge.Credentials]
+apikey = $BinaryEdge
+EOT
+
+cat <<EOT >> config.yaml
+binaryedge: [$BinaryEdge]
+dnsdb: [$DNSDB]
+github: [$GitHub]
+securitytrails: [$SecurityTrails]
+virustotal: [$VirusTotal]
+EOT
 
 echo "Running Setup..."
 
@@ -57,10 +97,10 @@ echo -e "${R}Running Sonar Project...${NC}"
 Tools/gotools/bin/crobat -s $Domain > SubDomains_Discovery/Sonar_Project.txt
 
 echo -e "${R}Running Amass...${NC}"
-Tools/gotools/bin/amass enum -passive -d $Domain > SubDomains_Discovery/Amass.txt
+Tools/gotools/bin/amass enum -passive -d $Domain -config config.ini > SubDomains_Discovery/Amass.txt
 
 echo -e "${R}Running Subfinder...${NC}"
-Tools/gotools/bin/subfinder -silent -d $Domain > SubDomains_Discovery/Subfinder.txt
+Tools/gotools/bin/subfinder -silent -d $Domain -all -config config.yaml > SubDomains_Discovery/Subfinder.txt
 
 echo -e "${R}Combining the Result (Sonar Project, Amass, Subfinder)...${NC}"
 cat SubDomains_Discovery/*.txt | sort -n | uniq > SubDomains_Discovery/Passive_Subdomains.txt
