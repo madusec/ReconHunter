@@ -26,8 +26,10 @@ rm -rf SubDomains_Discovery SubDomains_Scanning IP_Scanning Github_Scanning Clou
 mkdir Tools SubDomains_Discovery SubDomains_Scanning IP_Scanning Github_Scanning Cloud_Scanning > /dev/null 2>&1
 cd Tools
 git clone https://github.com/gwen001/s3-buckets-finder > /dev/null 2>&1
+if [[ -z $(which go/bin/go) ]]; then
 wget -q https://golang.org/dl/go1.16.4.linux-amd64.tar.gz
-tar -xf go1.16.4.linux-amd64.tar.gz
+tar -xf go1.16.4.linux-amd64.tar.gz && rm go1.16.4.linux-amd64.tar.gz
+fi
 cd ..
 
 export PATH=$PWD/Tools/go/bin/:$PATH
