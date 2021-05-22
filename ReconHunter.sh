@@ -18,9 +18,9 @@ AWSSecretKey=
 
 echo "Running Setup..."
 
-apt-get update
-apt-get -y install python3 python3-pip php php-curl awscli
-python3 -m pip install censys truffleHog
+apt-get update > /dev/null 2>&1
+apt-get -y install python3 python3-pip php php-curl awscli > /dev/null 2>&1
+python3 -m pip install censys truffleHog > /dev/null 2>&1
 
 rm -rf SubDomains_Discovery SubDomains_Scanning IP_Scanning Github_Scanning Cloud_Scanning
 mkdir Tools SubDomains_Discovery SubDomains_Scanning IP_Scanning Github_Scanning Cloud_Scanning > /dev/null 2>&1
@@ -102,7 +102,7 @@ echo "Total IP:" $(wc -l IP_Scanning/Resolved_IPs.txt)
 rm IP_Scanning/IP.txt
 
 echo -e "${R}Running Censys Scan...${NC}"
-printf "$API_ID\n$API_Secret\n" | censys config
+printf "$API_ID\n$API_Secret\n" | censys config > /dev/null 2>&1
 censys search --index-type ipv4 -q "443.https.tls.certificate.parsed.subject.common_name:$Domain or 443.https.tls.certificate.parsed.names:$Domain or 443.https.tls.certificate.parsed.extensions.subject_alt_name.dns_names:$Domain or 443.https.tls.certificate.parsed.subject_dn:$Domain" --fields ip protocols --overwrite > IP_Scanning/Censys_Result.txt
 cat IP_Scanning/Censys_Result.txt | grep ip | cut -d '"' -f 4 | sort -n | uniq > IP_Scanning/Censys_IPs.txt
 echo "Total IP:" $(wc -l IP_Scanning/Censys_IPs.txt)
@@ -149,7 +149,7 @@ fi
 echo -e "${G}########## Running Step 6 ##########${NC}"
 
 echo -e "${R}Running Cloud Recon...${NC}"
-printf "$AWSAccessKeyId\n$AWSSecretKey\nus-west-1\njson\n" | aws configure
+printf "$AWSAccessKeyId\n$AWSSecretKey\nus-west-1\njson\n" | aws configure > /dev/null 2>&1
 
 cd Cloud_Scanning
 # Download wordlist then apply permutations on it
