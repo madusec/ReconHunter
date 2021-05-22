@@ -22,7 +22,7 @@ echo -e "Github Username: ${G}$User${NC}"
 echo "Running Setup..."
 rm -rf Tools SubDomains_Discovery SubDomains_Scanning IP_Scanning Github_Scanning Cloud_Scanning
 mkdir Tools SubDomains_Discovery SubDomains_Scanning IP_Scanning Github_Scanning Cloud_Scanning
-cd Tools && wget https://golang.org/dl/go1.16.4.linux-amd64.tar.gz
+cd Tools && wget https://golang.org/dl/go1.16.4.linux-amd64.tar.gz -q
 tar -xf go1.16.4.linux-amd64.tar.gz && cd ..
 export PATH=$PWD/Tools/go/bin/:$PATH
 export GOPATH=$PWD/Tools/gotools
