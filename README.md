@@ -1,8 +1,6 @@
 ## ReconHunter
 
 ![alt text](https://github.com/hassan0x/ReconHunter/raw/main/Screen1.png?raw=true)
-![alt text](https://github.com/hassan0x/ReconHunter/raw/main/Screen2.png?raw=true)
-![alt text](https://github.com/hassan0x/ReconHunter/raw/main/Screen3.png?raw=true)
 
 ## Techniques Used
 
@@ -37,3 +35,7 @@
 ### Cloud Enumeration
 - S3 Buckets Finder
 
+### POC
+
+![alt text](https://github.com/hassan0x/ReconHunter/raw/main/Screen2.png?raw=true)
+![alt text](https://github.com/hassan0x/ReconHunter/raw/main/Screen3.png?raw=true)
