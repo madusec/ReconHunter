@@ -214,7 +214,8 @@ if ! [[ $(find . -type d) == "." ]]; then
 for i in ./*/; do
 cd $i
 git log -p > Commits.txt
-cat Commits.txt | grep "api\|key\|user\|uname\|pw\|pass\|mail\|credential\|login\|token\|secret" > ../"$i"_Secrets.txt
+j=`echo $i | sed 's/\.\///' | sed 's/\///'`;
+cat Commits.txt | grep "api\|key\|user\|uname\|pw\|pass\|mail\|credential\|login\|token\|secret" > ../"$j"_Secrets.txt
 cd ..
 done
 # Find sensitive data inside repos using trufflehog
@@ -223,6 +224,7 @@ trufflehog --entropy=False --regex $i >> Trufflehog_Secrets.txt;
 done
 cd ..
 fi
+
 fi
 
 if [[ $AWSAccessKeyId ]] && [[ $AWSSecretKey ]]; then
@@ -247,7 +249,7 @@ done; done
 
 # Start the brute force
 cd ../Tools/s3-buckets-finder
-php s3-buckets-bruteforcer.php --bucket ../../Cloud_Scanning/AWS_Wordlist.txt --verbosity 1
+php s3-buckets-bruteforcer.php --bucket ../../Cloud_Scanning/AWS_Wordlist.txt --verbosity 1 | tee -a Cloud_Scanning/Result.txt
 cd ../../
 
 fi
