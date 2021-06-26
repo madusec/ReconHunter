@@ -95,10 +95,10 @@ EOT
 echo "Installing the Required Tools..."
 
 apt-get update > /dev/null 2>&1
-apt-get -y install python3 python3-pip php php-curl awscli > /dev/null 2>&1
+apt-get -y install aha python3 python3-pip php php-curl awscli > /dev/null 2>&1
 python3 -m pip install censys truffleHog > /dev/null 2>&1
 
-rm -rf SubDomains_Discovery SubDomains_Scanning IP_Scanning Github_Scanning Cloud_Scanning
+rm -rf SubDomains_Discovery SubDomains_Scanning IP_Scanning Github_Scanning Cloud_Scanning *.html
 mkdir Tools SubDomains_Discovery SubDomains_Scanning IP_Scanning Github_Scanning Cloud_Scanning > /dev/null 2>&1
 cd Tools
 git clone https://github.com/gwen001/s3-buckets-finder > /dev/null 2>&1
@@ -164,7 +164,7 @@ Tools/gotools/bin/SubOver -l SubDomains_Scanning/Test_Takeover.txt | tee -a SubD
 mv providers.json SubDomains_Scanning/Providers.json
 
 echo -e "${R}Running Screenshot Process...${NC}"
-cat SubDomains_Discovery/Final_Resolved_Subdomains.txt | Tools/gotools/bin/httpx -title -tech-detect -status-code -title -follow-redirects -threads 5 -timeout 10 | tee -a SubDomains_Scanning/Screenshots.txt
+cat SubDomains_Discovery/Final_Resolved_Subdomains.txt | Tools/gotools/bin/httpx -title -tech-detect -status-code -title -follow-redirects -threads 5 -timeout 10 -no-color | tee -a SubDomains_Scanning/Screenshots.txt
 
 echo -e "${G}########## Running Step 3 ##########${NC}"
 
@@ -215,7 +215,7 @@ for i in ./*/; do
 cd $i
 git log -p > Commits.txt
 j=`echo $i | sed 's/\.\///' | sed 's/\///'`;
-cat Commits.txt | grep "api\|key\|user\|uname\|pw\|pass\|mail\|credential\|login\|token\|secret" > ../"$j"_Secrets.txt
+cat Commits.txt | grep --color=always -i "api\|key\|user\|uname\|pw\|pass\|mail\|credential\|login\|token\|secret" | aha > ../"$j"_Secrets.html
 cd ..
 done
 # Find sensitive data inside repos using trufflehog
@@ -256,7 +256,7 @@ fi
 
 # Generate The Report
 
-echo "Final Report" > Report.html
+echo "<h1>Final Report</h1>" > Report.html
 
 echo "<br>############################ Subdomain Discovery ############################<br>" >> Report.html
 
@@ -316,7 +316,8 @@ echo "<br>######### Trufflehog_Secrets.txt #########<br>" >> ../Report.html
 cat Trufflehog_Secrets.txt >> ../Report.html
 
 echo "<br>######### Secrets.txt #########<br>" >> ../Report.html
-tail -n +1 *_Secrets.txt >> ../Report.html
+tail -n +1 *_Secrets.html >> ../git.html
+echo "<a href="git.html">Git Report</a>" >> ../Report.html
 cd ..
 
 echo "<br>############################ Cloud Scanning ############################<br>" >> Report.html
