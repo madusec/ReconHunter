@@ -253,3 +253,78 @@ php s3-buckets-bruteforcer.php --bucket ../../Cloud_Scanning/AWS_Wordlist.txt --
 cd ../../
 
 fi
+
+# Generate The Report
+
+echo "Final Report" > Report.html
+
+echo "<br>############################ Subdomain Discovery ############################<br>" >> Report.html
+
+cd SubDomains_Discovery
+echo "<br>######### Sonar_Project.txt #########<br>" >> ../Report.html
+cat Sonar_Project.txt >> ../Report.html
+
+echo "<br>######### Amass.txt #########<br>" >> ../Report.html
+cat Amass.txt >> ../Report.html
+
+echo "<br>######### Subfinder.txt #########<br>" >> ../Report.html
+cat Subfinder.txt >> ../Report.html
+
+echo "<br>######### Passive_Subdomains.txt #########<br>" >> ../Report.html
+cat Passive_Subdomains.txt >> ../Report.html
+
+echo "<br>######### Resolved_Passive-Subdomains.txt #########<br>" >> ../Report.html
+cat Resolved_Passive-Subdomains.txt >> ../Report.html
+
+echo "<br>######### Resolved_BruteForce.txt #########<br>" >> ../Report.html
+cat Resolved_BruteForce.txt >> ../Report.html
+
+echo "<br>######### Final_Resolved_Subdomains.txt #########<br>" >> ../Report.html
+cat Final_Resolved_Subdomains.txt >> ../Report.html
+cd ..
+
+echo "<br>############################ Subdomain Scanning ############################<br>" >> Report.html
+
+cd SubDomains_Scanning
+echo "<br>######### Result_Takeover.txt #########<br>" >> ../Report.html
+cat Result_Takeover.txt >> ../Report.html
+
+echo "<br>######### Screenshots.txt #########<br>" >> ../Report.html
+cat Screenshots.txt >> ../Report.html
+cd ..
+
+echo "<br>############################ IP Scanning ############################<br>" >> Report.html
+
+cd IP_Scanning
+echo "<br>######### Resolved_IPs.txt #########<br>" >> ../Report.html
+cat Resolved_IPs.txt >> ../Report.html
+
+echo "<br>######### Censys_IPs.txt #########<br>" >> ../Report.html
+cat Censys_IPs.txt >> ../Report.html
+
+echo "<br>######### Final_IPs.txt #########<br>" >> ../Report.html
+cat Final_IPs.txt >> ../Report.html
+
+echo "<br>######### Summary.txt #########<br>" >> ../Report.html
+cat Summary.txt >> ../Report.html
+cd ..
+
+echo "<br>############################ Github Scanning ############################<br>" >> Report.html
+
+cd Github_Scanning
+echo "<br>######### Trufflehog_Secrets.txt #########<br>" >> ../Report.html
+cat Trufflehog_Secrets.txt >> ../Report.html
+
+echo "<br>######### Secrets.txt #########<br>" >> ../Report.html
+tail -n +1 *_Secrets.txt >> ../Report.html
+cd ..
+
+echo "<br>############################ Cloud Scanning ############################<br>" >> Report.html
+
+cd Cloud_Scanning
+echo "<br>######### Result.txt #########<br>" >> ../Report.html
+cat Result.txt >> ../Report.html
+cd ..
+
+cat Report.html | sed 's/$/<br>/' > tmp
+mv tmp Report.html
